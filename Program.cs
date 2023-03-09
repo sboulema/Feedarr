@@ -1,9 +1,8 @@
+using System.Text.RegularExpressions;
 using X.Web.RSS;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
-
-app.MapGet("/", () => "Hello World!");
 
 app.MapGet("/{folder}.rss", (string folder) =>
 {
@@ -30,8 +29,8 @@ app.MapGet("/{folder}.rss", (string folder) =>
     {
         feed.Channel.Items.Add(new()
         {
-            Title = file.Name,
-            Description = file.Name,
+            Title = Cleanup(file.Name),
+            Description = Cleanup(file.Name),
             Link = new($"{baseUrl}/{folder}/{file.Name}"),
             PubDate = file.CreationTimeUtc,
             Enclosure = new()
@@ -56,3 +55,12 @@ app.MapGet("/{folder}/{file}.torrent", async (string folder, string file) =>
 });
 
 app.Run();
+
+string Cleanup(string fileName)
+{
+    fileName = Path.GetFileNameWithoutExtension(fileName);
+    fileName = fileName.Replace(".", " ");
+    fileName = Regex.Replace(fileName, @"\p{Cs}", string.Empty);
+
+    return fileName;
+}

@@ -60,7 +60,8 @@ string Cleanup(string fileName)
 {
     fileName = Path.GetFileNameWithoutExtension(fileName);
     fileName = fileName.Replace(".", " ");
-    fileName = Regex.Replace(fileName, @"\p{Cs}", string.Empty);
+    fileName = Regex.Replace(fileName, @"\p{Cs}|\p{So}", string.Empty);
+    fileName = fileName.Trim();
 
     return fileName;
 }

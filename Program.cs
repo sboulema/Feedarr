@@ -22,7 +22,7 @@ app.MapGet("/{folder}.rss", async (string folder) =>
             Link = new(baseUrl),
             TTL = 30,
             Description = $"Feedarr {folder} feed",
-            Items = new()
+            Items = []
         }
     };
 

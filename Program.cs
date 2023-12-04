@@ -15,12 +15,6 @@ app.MapGet("/{folder}.rss", async (string folder) =>
 
 	var baseUrl = app.Configuration["BASE_URL"] ?? string.Empty;
 
-	var feed = new SyndicationFeed
-	{
-		Title = new($"Feedarr {folder} feed"),
-		Description = new($"Feedarr {folder} feed"),
-	};
-
 	var items = new List<SyndicationItem>();
 
 	foreach (var file in new DirectoryInfo($"/torrents/{folder}").GetFiles())
@@ -34,9 +28,13 @@ app.MapGet("/{folder}.rss", async (string folder) =>
 		
 		items.Add(item);
 	}
-	
-	feed.Items = items;
 
+	var feed = new SyndicationFeed(
+		title: $"Feedarr {folder} feed",
+		description: $"Feedarr {folder} feed",
+		feedAlternateLink: new($"{baseUrl}/{folder}.rss"),
+		items: items);
+	
 	return Results.Text(FeedToByteArray(feed), "application/rss+xml; charset=utf-8");
 });
 

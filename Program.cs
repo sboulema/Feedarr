@@ -18,7 +18,7 @@ app.MapGet("/{folder}.rss", async (string folder) =>
 	var feed = new SyndicationFeed
 	{
 		Title = new($"Feedarr {folder} feed"),
-		TimeToLive = TimeSpan.FromSeconds(30),
+		TimeToLive = TimeSpan.FromMinutes(1),
 		Description = new($"Feedarr {folder} feed")
 	};
 

@@ -1,95 +1,108 @@
+using System.ServiceModel.Syndication;
+using System.Text;
 using System.Text.RegularExpressions;
-using X.Web.RSS;
-using X.Web.RSS.Structure.Validators;
+using System.Xml;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
 app.MapGet("/{folder}.rss", async (string folder) =>
 {
-    if (!Path.Exists($"/torrents/{folder}"))
-    {
-        return Results.NotFound();
-    }
+	if (!Path.Exists($"/torrents/{folder}"))
+	{
+		return Results.NotFound();
+	}
 
-    var baseUrl = app.Configuration["BASE_URL"] ?? string.Empty;
+	var baseUrl = app.Configuration["BASE_URL"] ?? string.Empty;
 
-    var feed = new RssDocument
-    {
-        Channel = new()
-        {
-            Title = $"Feedarr {folder} feed",
-            Link = new(baseUrl),
-            TTL = 30,
-            Description = $"Feedarr {folder} feed",
-            Items = []
-        }
-    };
+	var feed = new SyndicationFeed
+	{
+		Title = new($"Feedarr {folder} feed"),
+		TimeToLive = TimeSpan.FromSeconds(30),
+		Description = new($"Feedarr {folder} feed")
+	};
 
-    foreach (var file in new DirectoryInfo($"/torrents/{folder}").GetFiles())
-    {
-        feed.Channel.Items.Add(new()
-        {
-            Title = Cleanup(file.Name),
-            Description = Cleanup(file.Name),
-            Link = await GetRssUrl(baseUrl, folder, file.Name),
-            PubDate = file.CreationTimeUtc,
-            Enclosure = new()
-            {
-                Url = await GetRssUrl(baseUrl, folder, file.Name),
-                Type = GetType(file.Extension)
-            }
-        });
-    }
-    
-    return Results.Text(feed.ToXml(), "text/xml");
+	var items = new List<SyndicationItem>();
+
+	foreach (var file in new DirectoryInfo($"/torrents/{folder}").GetFiles())
+	{
+		var title = Cleanup(file.Name);
+		var link = await CreateMediaEnclosureLink(baseUrl, folder, file);
+		
+		var item = new SyndicationItem
+		{
+			Title = new(title),
+			PublishDate = file.CreationTimeUtc
+		};
+		item.Links.Add(link);
+	}
+
+	return Results.Text(FeedToString(feed), "text/xml");
 });
 
 app.MapGet("/{folder}/{fileName}.torrent", async (string folder, string fileName) =>
 {
-    if (!Path.Exists($"/torrents/{folder}/{fileName}.torrent"))
-    {
-        return Results.NotFound();
-    }
+	if (!Path.Exists($"/torrents/{folder}/{fileName}.torrent"))
+	{
+		return Results.NotFound();
+	}
 
-    return Results.File(await File.ReadAllBytesAsync($"/torrents/{folder}/{fileName}.torrent"));
+	return Results.File(await File.ReadAllBytesAsync($"/torrents/{folder}/{fileName}.torrent"));
 });
 
 app.Run();
 
 string Cleanup(string fileName)
 {
-    fileName = Path.GetFileNameWithoutExtension(fileName);
-    fileName = fileName.Replace(".", " ");
-    // Remove emoticons from file name
-    fileName = Regex.Replace(fileName, @"\p{Cs}|\p{So}", string.Empty);
-    fileName = fileName.Trim();
+	fileName = Path.GetFileNameWithoutExtension(fileName);
+	fileName = fileName.Replace(".", " ");
+	// Remove emoticons from file name
+	fileName = Regex.Replace(fileName, @"\p{Cs}|\p{So}", string.Empty);
+	fileName = fileName.Trim();
 
-    return fileName;
+	return fileName;
 }
 
-async Task<RssUrl> GetRssUrl(string baseUrl, string folder, string fileName)
+async Task<Uri?> GetItemUri(string baseUrl, string folder, string fileName)
 {
-    var fileExtension = Path.GetExtension(fileName);
+	var fileExtension = Path.GetExtension(fileName);
 
-    if (fileExtension == ".torrent")
-    {
-        return new($"{baseUrl}/{folder}/{fileName}");
-    }
+	if (fileExtension == ".torrent")
+	{
+		return new($"{baseUrl}/{folder}/{fileName}");
+	}
 
-    if (fileExtension == ".magnet")
-    {
-        var magnetUrl = await File.ReadAllTextAsync($"/torrents/{folder}/{fileName}");
-        return new(magnetUrl);
-    }
+	if (fileExtension == ".magnet")
+	{
+		var magnetUrl = await File.ReadAllTextAsync($"/torrents/{folder}/{fileName}");
+		return new(magnetUrl);
+	}
 
-    return new();
+	return null;
 }
 
-string GetType(string fileExtension)
-    => fileExtension switch
-    {
-        ".torrent" => "application/x-bittorrent",
-        ".magnet" => "x-scheme-handler/magnet",
-        _ => string.Empty
-    };
+string GetMediaType(string fileExtension)
+	=> fileExtension switch
+	{
+		".torrent" => "application/x-bittorrent",
+		".magnet" => "x-scheme-handler/magnet",
+		_ => string.Empty
+	};
+	
+async Task<SyndicationLink> CreateMediaEnclosureLink(string baseUrl, string folder, FileInfo file) 
+{
+	var uri = await GetItemUri(baseUrl, folder, file.Name);
+	var mediaType = GetMediaType(file.Extension);
+	
+	return SyndicationLink.CreateMediaEnclosureLink(uri, mediaType, file.Length);
+}
+
+string FeedToString(SyndicationFeed feed) 
+{
+	var rssFormatter = new Rss20FeedFormatter(feed, false);
+	var output = new StringBuilder();
+	using var writer = XmlWriter.Create(output, new XmlWriterSettings { Indent = true });
+	rssFormatter.WriteTo(writer);
+	writer.Flush();
+	return output.ToString();
+}

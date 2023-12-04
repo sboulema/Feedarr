@@ -35,6 +35,8 @@ app.MapGet("/{folder}.rss", async (string folder) =>
 			PublishDate = file.CreationTimeUtc
 		};
 		item.Links.Add(link);
+		
+		items.Add(item);
 	}
 	
 	feed.Items = items;

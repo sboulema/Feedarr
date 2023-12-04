@@ -36,6 +36,8 @@ app.MapGet("/{folder}.rss", async (string folder) =>
 		};
 		item.Links.Add(link);
 	}
+	
+	feed.Items = items;
 
 	return Results.Text(FeedToString(feed), "text/xml");
 });

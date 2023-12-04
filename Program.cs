@@ -18,8 +18,7 @@ app.MapGet("/{folder}.rss", async (string folder) =>
 	var feed = new SyndicationFeed
 	{
 		Title = new($"Feedarr {folder} feed"),
-		TimeToLive = TimeSpan.FromMinutes(1),
-		Description = new($"Feedarr {folder} feed")
+		Description = new($"Feedarr {folder} feed"),
 	};
 
 	var items = new List<SyndicationItem>();
@@ -30,7 +29,7 @@ app.MapGet("/{folder}.rss", async (string folder) =>
 		var link = await GetItemUri(baseUrl, folder, file.Name);
 		var enclosureLink = await CreateMediaEnclosureLink(baseUrl, folder, file);
 		
-		var item = new SyndicationItem(title, title, link, Guid.NewGuid().ToString(), file.CreationTimeUtc);
+		var item = new SyndicationItem(title, title, link, link.ToString(), file.CreationTimeUtc);
 		item.Links.Add(enclosureLink);
 		
 		items.Add(item);
@@ -38,7 +37,7 @@ app.MapGet("/{folder}.rss", async (string folder) =>
 	
 	feed.Items = items;
 
-	return Results.Text(FeedToString(feed), "text/xml");
+	return Results.Text(FeedToByteArray(feed), "application/rss+xml; charset=utf-8");
 });
 
 app.MapGet("/{folder}/{fileName}.torrent", async (string folder, string fileName) =>
@@ -98,12 +97,19 @@ async Task<SyndicationLink> CreateMediaEnclosureLink(string baseUrl, string fold
 	return SyndicationLink.CreateMediaEnclosureLink(uri, mediaType, file.Length);
 }
 
-string FeedToString(SyndicationFeed feed) 
+byte[] FeedToByteArray(SyndicationFeed feed) 
 {
-	var rssFormatter = new Rss20FeedFormatter(feed, false);
-	var output = new StringBuilder();
-	using var writer = XmlWriter.Create(output, new XmlWriterSettings { Indent = true });
-	rssFormatter.WriteTo(writer);
-	writer.Flush();
-	return output.ToString();
+	using var stream = new MemoryStream();
+	using var xmlWriter = XmlWriter.Create(stream, new() 
+	{
+		Encoding = Encoding.UTF8,
+		NewLineHandling = NewLineHandling.Entitize,
+		NewLineOnAttributes = true,
+		Indent = true
+	});
+	
+	new Rss20FeedFormatter(feed, false).WriteTo(xmlWriter);
+	xmlWriter.Flush();
+	
+	return stream.ToArray();
 }

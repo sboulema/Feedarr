@@ -27,14 +27,11 @@ app.MapGet("/{folder}.rss", async (string folder) =>
 	foreach (var file in new DirectoryInfo($"/torrents/{folder}").GetFiles())
 	{
 		var title = Cleanup(file.Name);
-		var link = await CreateMediaEnclosureLink(baseUrl, folder, file);
+		var link = await GetItemUri(baseUrl, folder, file.Name);
+		var enclosureLink = await CreateMediaEnclosureLink(baseUrl, folder, file);
 		
-		var item = new SyndicationItem
-		{
-			Title = new(title),
-			PublishDate = file.CreationTimeUtc
-		};
-		item.Links.Add(link);
+		var item = new SyndicationItem(title, title, link, Guid.NewGuid().ToString(), file.CreationTimeUtc);
+		item.Links.Add(enclosureLink);
 		
 		items.Add(item);
 	}

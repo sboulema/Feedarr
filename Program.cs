@@ -22,20 +22,26 @@ app.MapGet("/{folder}.rss", async (string folder) =>
 		var title = Cleanup(file.Name);
 		var link = await GetItemUri(baseUrl, folder, file.Name);
 		var enclosureLink = await CreateMediaEnclosureLink(baseUrl, folder, file);
-		
-		var item = new SyndicationItem(title, title, link, link.ToString(), file.CreationTimeUtc);
+
+		var item = new SyndicationItem(title, title, link, Guid.NewGuid().ToString(), file.CreationTimeUtc)
+		{
+			PublishDate = file.CreationTimeUtc
+		};
 		item.Links.Add(enclosureLink);
 		
 		items.Add(item);
 	}
 
-	var feed = new SyndicationFeed(
-		title: $"Feedarr {folder} feed",
-		description: $"Feedarr {folder} feed",
-		feedAlternateLink: new($"{baseUrl}/{folder}.rss"),
-		items: items);
-	
-	return Results.Text(FeedToByteArray(feed), "application/rss+xml; charset=utf-8");
+    var feed = new SyndicationFeed(
+        title: $"Feedarr {folder} feed",
+        description: $"Feedarr {folder} feed",
+        feedAlternateLink: new($"{baseUrl}/{folder}.rss"),
+        items: items)
+    {
+        TimeToLive = TimeSpan.FromMinutes(30)
+    };
+
+    return Results.Text(FeedToByteArray(feed), "application/rss+xml; charset=utf-8");
 });
 
 app.MapGet("/{folder}/{fileName}.torrent", async (string folder, string fileName) =>

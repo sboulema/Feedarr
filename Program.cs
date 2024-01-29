@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.ServiceModel.Syndication;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -22,8 +23,9 @@ app.MapGet("/{folder}.rss", async (string folder) =>
 		var title = Cleanup(file.Name);
 		var link = await GetItemUri(baseUrl, folder, file.Name);
 		var enclosureLink = await CreateMediaEnclosureLink(baseUrl, folder, file);
+		var id = GetItemId(title);
 
-		var item = new SyndicationItem(title, title, link, Guid.NewGuid().ToString(), file.CreationTimeUtc)
+		var item = new SyndicationItem(title, title, link, id, file.CreationTimeUtc)
 		{
 			PublishDate = file.CreationTimeUtc
 		};
@@ -32,16 +34,16 @@ app.MapGet("/{folder}.rss", async (string folder) =>
 		items.Add(item);
 	}
 
-    var feed = new SyndicationFeed(
-        title: $"Feedarr {folder} feed",
-        description: $"Feedarr {folder} feed",
-        feedAlternateLink: new($"{baseUrl}/{folder}.rss"),
-        items: items)
-    {
-        TimeToLive = TimeSpan.FromMinutes(30)
-    };
+	var feed = new SyndicationFeed(
+		title: $"Feedarr {folder} feed",
+		description: $"Feedarr {folder} feed",
+		feedAlternateLink: new($"{baseUrl}/{folder}.rss"),
+		items: items)
+	{
+		TimeToLive = TimeSpan.FromMinutes(30)
+	};
 
-    return Results.Text(FeedToByteArray(feed), "application/rss+xml; charset=utf-8");
+	return Results.Text(FeedToByteArray(feed), "application/rss+xml; charset=utf-8");
 });
 
 app.MapGet("/{folder}/{fileName}.torrent", async (string folder, string fileName) =>
@@ -84,6 +86,9 @@ async Task<Uri?> GetItemUri(string baseUrl, string folder, string fileName)
 
 	return null;
 }
+
+string GetItemId(string title)
+	=> Convert.ToHexString(MD5.HashData(Encoding.Unicode.GetBytes(title))).ToLowerInvariant();
 
 string GetMediaType(string fileExtension)
 	=> fileExtension switch

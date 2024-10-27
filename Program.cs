@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.ServiceModel.Syndication;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
 using System.Xml;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -46,15 +47,10 @@ app.MapGet("/{folder}.rss", async (string folder) =>
 	return Results.Text(FeedToByteArray(feed), "application/rss+xml; charset=utf-8");
 });
 
-app.MapGet("/{folder}/{fileName}.torrent", async (string folder, string fileName) =>
-{
-	if (!Path.Exists($"/torrents/{folder}/{fileName}.torrent"))
-	{
-		return Results.NotFound();
-	}
-
-	return Results.File(await File.ReadAllBytesAsync($"/torrents/{folder}/{fileName}.torrent"));
-});
+app.MapGet("/{folder}/{fileName}.torrent", async (string folder, string fileName)
+	=> Path.Exists($"/torrents/{folder}/{HttpUtility.UrlDecode(fileName)}.torrent")
+		? Results.File(await File.ReadAllBytesAsync($"/torrents/{folder}/{HttpUtility.UrlDecode(fileName)}.torrent"))
+		: Results.NotFound());
 
 app.Run();
 
@@ -72,19 +68,19 @@ string Cleanup(string fileName)
 async Task<Uri?> GetItemUri(string baseUrl, string folder, string fileName)
 {
 	var fileExtension = Path.GetExtension(fileName);
-
-	if (fileExtension == ".torrent")
+	
+	switch (fileExtension)
 	{
-		return new($"{baseUrl}/{folder}/{fileName}");
+		case ".torrent":
+			return new($"{baseUrl}/{folder}/{HttpUtility.UrlEncode(fileName)}");
+		case ".magnet":
+		{
+			var magnetUrl = await File.ReadAllTextAsync($"/torrents/{folder}/{fileName}");
+			return new(magnetUrl);
+		}
+		default:
+			return null;
 	}
-
-	if (fileExtension == ".magnet")
-	{
-		var magnetUrl = await File.ReadAllTextAsync($"/torrents/{folder}/{fileName}");
-		return new(magnetUrl);
-	}
-
-	return null;
 }
 
 string GetItemId(string title)
@@ -114,7 +110,7 @@ byte[] FeedToByteArray(SyndicationFeed feed)
 		Encoding = Encoding.UTF8,
 		NewLineHandling = NewLineHandling.Entitize,
 		NewLineOnAttributes = true,
-		Indent = true
+		Indent = true,
 	});
 	
 	new Rss20FeedFormatter(feed, false).WriteTo(xmlWriter);

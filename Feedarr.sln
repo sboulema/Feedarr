@@ -1,9 +1,8 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.5.002.0
+VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Feedarr", "Feedarr.csproj", "{2D899614-EBCC-4FB1-AC9C-22C68E1E8224}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Feedarr", "Feedarr.csproj", "{34943EA1-9A57-C6AE-201A-5D9CBB1395E7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +10,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2D899614-EBCC-4FB1-AC9C-22C68E1E8224}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2D899614-EBCC-4FB1-AC9C-22C68E1E8224}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2D899614-EBCC-4FB1-AC9C-22C68E1E8224}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2D899614-EBCC-4FB1-AC9C-22C68E1E8224}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34943EA1-9A57-C6AE-201A-5D9CBB1395E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34943EA1-9A57-C6AE-201A-5D9CBB1395E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34943EA1-9A57-C6AE-201A-5D9CBB1395E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34943EA1-9A57-C6AE-201A-5D9CBB1395E7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {41B35BBF-5162-4856-8297-3AA358F92E46}
+		SolutionGuid = {5FC5AB30-636B-48F9-9243-DA131DB761AB}
 	EndGlobalSection
 EndGlobal

@@ -7,7 +7,7 @@ on:
       - 'feature/**'
 
 env:
-  version: '1.0.${{ github.run_number }}'
+  version: '2.0.${{ github.run_number }}'
   tag: ${{ github.ref_name == 'main' && 'latest' || github.run_number }}
 
 jobs:
@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

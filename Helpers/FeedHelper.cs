@@ -1,12 +1,10 @@
 ﻿using Feedarr.Models;
-using System.Drawing;
 using System.Security.Cryptography;
 using System.ServiceModel.Syndication;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Xml;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Feedarr.Helpers;
 
@@ -196,7 +194,7 @@ internal static class FeedHelper
         switch (Path.GetExtension(fileName))
         {
             case ".torrent":
-                return new($"{baseUrl}/{folder}/{HttpUtility.UrlEncode(fileName)}");
+                return new($"{baseUrl}/{folder}/{Uri.EscapeDataString(fileName)}");
             case ".magnet":
                 {
                     var magnetUrl = (await File.ReadAllTextAsync($"{TorrentsRoot}/{folder}/{fileName}")).Trim();
